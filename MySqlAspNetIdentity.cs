@@ -1,4 +1,5 @@
-﻿using System.Data.Common;
+﻿using System.Collections.Generic;
+using System.Data.Common;
 using System.Data.Entity;
 using System.Data.Entity.Migrations.History;
 using System.Data.Entity.Migrations.Model;
@@ -47,7 +48,20 @@ namespace MySql.AspNetIdentity
 
         }
 
-  
+
+        public override IEnumerable<MigrationStatement> Generate(IEnumerable<MigrationOperation> migrationOperations, string providerManifestToken)
+        {
+            var res = base.Generate(migrationOperations, providerManifestToken);
+
+            // remove 'dbo.' from statements and add sql terminate char ';'
+            foreach(var statement in res)
+            {
+                statement.Sql = statement.Sql.Replace("dbo.", "") + (!statement.Sql.EndsWith(";") ? ";" : string.Empty);
+            }
+
+            return res;
+        }
+
         protected override string Generate(ColumnModel op)
         {
             var sql = base.Generate(op);
@@ -59,26 +73,5 @@ namespace MySql.AspNetIdentity
             return sql;
         }
         
-        protected override MigrationStatement Generate(CreateTableOperation op)
-        {
-            var result = base.Generate(op);
-            result.Sql += ";";
-            return result;
-        }
-
-
-        protected override MigrationStatement Generate(CreateIndexOperation op)
-        {
-            var result = base.Generate(op);
-            result.Sql += ";";
-            return result;
-        }
-
-        protected override MigrationStatement Generate(AddForeignKeyOperation op)
-        {
-            var result = base.Generate(op);
-            result.Sql += ";";
-            return result;
-        }
     }
 }
